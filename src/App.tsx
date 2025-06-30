@@ -15,6 +15,7 @@ import { supabase, onAuthStateChange } from './lib/supabase';
 import { checkSession, handleRefreshTokenError } from './lib/auth';
 import { locationToggleManager } from './lib/locationToggle';
 import { transformProfileToUser } from '../lib/utils';
+import { isDemoUser } from './utils/demo';
 
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<'welcome' | 'login' | 'profileSetup' | 'app'>('welcome');
@@ -247,9 +248,13 @@ export default function App() {
           }
         }
 
+        const isDemo = isDemoUser(user.email);
         const { error } = await supabase.auth.signOut();
         if (error) {
           console.error('Logout error:', error);
+        }
+        if (isDemo) {
+          alert('You were using a demo account. All changes were temporary.');
         }
       }
       // handleSignOut will be called by the auth state listener
@@ -271,6 +276,10 @@ export default function App() {
   };
 
   const handleEditProfile = () => {
+    if (currentUser && isDemoUser(currentUser.email)) {
+      alert('Edit profile not allowed in testing bot accounts.');
+      return;
+    }
     setIsEditingProfile(true);
   };
 
